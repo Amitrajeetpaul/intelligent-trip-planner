@@ -1,38 +1,83 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import {
+  trips, itineraryItems, packingItems,
+  type InsertTrip, type InsertItineraryItem, type InsertPackingItem,
+  type Trip, type ItineraryItem, type PackingItem
+} from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Trips
+  createTrip(trip: InsertTrip): Promise<Trip>;
+  getTrip(id: number): Promise<Trip | undefined>;
+  getTripsByUser(userId: string): Promise<Trip[]>;
+  deleteTrip(id: number): Promise<void>;
+  updateTrip(id: number, updates: Partial<InsertTrip>): Promise<Trip>;
+
+  // Itinerary
+  createItineraryItem(item: InsertItineraryItem): Promise<ItineraryItem>;
+  getItinerary(tripId: number): Promise<ItineraryItem[]>;
+  deleteItineraryItem(id: number): Promise<void>;
+
+  // Packing
+  createPackingItem(item: InsertPackingItem): Promise<PackingItem>;
+  getPackingList(tripId: number): Promise<PackingItem[]>;
+  togglePackingItem(id: number, isChecked: boolean): Promise<PackingItem>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  // Trips
+  async createTrip(trip: InsertTrip): Promise<Trip> {
+    const [newTrip] = await db.insert(trips).values(trip).returning();
+    return newTrip;
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getTrip(id: number): Promise<Trip | undefined> {
+    const [trip] = await db.select().from(trips).where(eq(trips.id, id));
+    return trip;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getTripsByUser(userId: string): Promise<Trip[]> {
+    return db.select().from(trips).where(eq(trips.userId, userId)).orderBy(desc(trips.startDate));
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async deleteTrip(id: number): Promise<void> {
+    await db.delete(trips).where(eq(trips.id, id));
+  }
+
+  async updateTrip(id: number, updates: Partial<InsertTrip>): Promise<Trip> {
+    const [updated] = await db.update(trips).set(updates).where(eq(trips.id, id)).returning();
+    return updated;
+  }
+
+  // Itinerary
+  async createItineraryItem(item: InsertItineraryItem): Promise<ItineraryItem> {
+    const [newItem] = await db.insert(itineraryItems).values(item).returning();
+    return newItem;
+  }
+
+  async getItinerary(tripId: number): Promise<ItineraryItem[]> {
+    return db.select().from(itineraryItems).where(eq(itineraryItems.tripId, tripId)).orderBy(itineraryItems.dayNumber);
+  }
+
+  async deleteItineraryItem(id: number): Promise<void> {
+    await db.delete(itineraryItems).where(eq(itineraryItems.id, id));
+  }
+
+  // Packing
+  async createPackingItem(item: InsertPackingItem): Promise<PackingItem> {
+    const [newItem] = await db.insert(packingItems).values(item).returning();
+    return newItem;
+  }
+
+  async getPackingList(tripId: number): Promise<PackingItem[]> {
+    return db.select().from(packingItems).where(eq(packingItems.tripId, tripId));
+  }
+
+  async togglePackingItem(id: number, isChecked: boolean): Promise<PackingItem> {
+    const [updated] = await db.update(packingItems).set({ isChecked }).where(eq(packingItems.id, id)).returning();
+    return updated;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
