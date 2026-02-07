@@ -4,7 +4,7 @@ import {
   type InsertTrip, type InsertItineraryItem, type InsertPackingItem,
   type Trip, type ItineraryItem, type PackingItem
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Trips
@@ -21,6 +21,7 @@ export interface IStorage {
 
   // Packing
   createPackingItem(item: InsertPackingItem): Promise<PackingItem>;
+  getPackingItem(id: number): Promise<PackingItem | undefined>;
   getPackingList(tripId: number): Promise<PackingItem[]>;
   togglePackingItem(id: number, isChecked: boolean): Promise<PackingItem>;
 }
@@ -57,7 +58,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getItinerary(tripId: number): Promise<ItineraryItem[]> {
-    return db.select().from(itineraryItems).where(eq(itineraryItems.tripId, tripId)).orderBy(itineraryItems.dayNumber);
+    return db.select().from(itineraryItems)
+      .where(eq(itineraryItems.tripId, tripId))
+      .orderBy(asc(itineraryItems.dayNumber));
   }
 
   async deleteItineraryItem(id: number): Promise<void> {
@@ -68,6 +71,11 @@ export class DatabaseStorage implements IStorage {
   async createPackingItem(item: InsertPackingItem): Promise<PackingItem> {
     const [newItem] = await db.insert(packingItems).values(item).returning();
     return newItem;
+  }
+
+  async getPackingItem(id: number): Promise<PackingItem | undefined> {
+    const [item] = await db.select().from(packingItems).where(eq(packingItems.id, id));
+    return item;
   }
 
   async getPackingList(tripId: number): Promise<PackingItem[]> {

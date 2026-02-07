@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+.env
+.env.*
+!.env.example
+.local
+*.log
+*.msi
+gemini_models.json
+simple-server.js

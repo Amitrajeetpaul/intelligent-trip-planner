@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar as CalendarIcon, Map, Wallet, User, Loader2, ArrowRight, ArrowLeft } from "lucide-react";
+import { Calendar as CalendarIcon, Map, Wallet, User, Loader2, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Types for the form
@@ -57,7 +57,7 @@ export default function Wizard() {
             <span className={cn(step >= 3 && "text-primary")}>Style</span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               className="h-full bg-primary"
               initial={{ width: "0%" }}
               animate={{ width: `${(step / 3) * 100}%` }}
@@ -67,8 +67,8 @@ export default function Wizard() {
         </div>
 
         <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-border/50 relative overflow-hidden">
-           {/* Abstract decoration */}
-           <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/30 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/2" />
+          {/* Abstract decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/30 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/2" />
 
           <AnimatePresence mode="wait">
             {step === 1 && (
@@ -78,16 +78,16 @@ export default function Wizard() {
               <TripDetails key="step2" onNext={handleNext} onBack={handleBack} mode={formData.mode!} initialData={formData} />
             )}
             {step === 3 && (
-              <PersonalitySelection 
-                key="step3" 
-                onBack={handleBack} 
+              <PersonalitySelection
+                key="step3"
+                onBack={handleBack}
                 onSubmit={(data) => {
                   setFormData(prev => ({ ...prev, ...data }));
                   // Need to trigger submit after state update, use useEffect or direct call with merged data
                   generateTrip({ ...formData, ...data } as any, {
                     onSuccess: () => navigate("/")
                   });
-                }} 
+                }}
                 isPending={isPending}
                 initialData={formData}
               />
@@ -156,9 +156,12 @@ function ModeSelection({ onNext, initialValue }: { onNext: (data: any) => void, 
 }
 
 function TripDetails({ onNext, onBack, mode, initialData }: any) {
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: initialData
   });
+
+  const watchDestination = watch("destination");
+  const watchMonth = watch("month");
 
   return (
     <motion.div
@@ -175,31 +178,59 @@ function TripDetails({ onNext, onBack, mode, initialData }: any) {
       <form onSubmit={handleSubmit(onNext)} className="space-y-6">
         {mode === "specific" ? (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="destination">Destination</Label>
-              <Input 
-                id="destination" 
-                placeholder="e.g. Paris, France" 
-                className="h-12 rounded-xl"
-                {...register("destination", { required: "Destination is required" })}
-              />
-              {errors.destination && <span className="text-sm text-destructive">{String(errors.destination.message)}</span>}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="destination">Destination</Label>
+                <div className="relative">
+                  <Input
+                    id="destination"
+                    placeholder="e.g. Paris, France"
+                    className="h-12 rounded-xl pl-10"
+                    {...register("destination", { required: "Destination is required" })}
+                  />
+                  <Map className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
+                </div>
+                {errors.destination && <span className="text-sm text-destructive">{String(errors.destination.message)}</span>}
+              </div>
+
+              {/* Destination Preview */}
+              <AnimatePresence>
+                {watchDestination && watchDestination.length > 2 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="relative rounded-2xl overflow-hidden h-40 border-4 border-white shadow-lg bg-muted"
+                  >
+                    <img
+                      src={`https://loremflickr.com/800/400/${encodeURIComponent(watchDestination.split(',')[0].trim())},travel/all`}
+                      alt="Destination Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-3 left-4 text-white font-bold flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" /> Vibe: {watchDestination}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">Start Date</Label>
-                <Input 
-                  id="startDate" 
-                  type="date" 
+                <Input
+                  id="startDate"
+                  type="date"
                   className="h-12 rounded-xl"
                   {...register("startDate", { required: "Start date is required" })}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endDate">End Date</Label>
-                <Input 
-                  id="endDate" 
-                  type="date" 
+                <Input
+                  id="endDate"
+                  type="date"
                   className="h-12 rounded-xl"
                   {...register("endDate", { required: "End date is required" })}
                 />
@@ -207,14 +238,37 @@ function TripDetails({ onNext, onBack, mode, initialData }: any) {
             </div>
           </>
         ) : (
-          <div className="space-y-2">
-            <Label htmlFor="month">Month of Travel</Label>
-            <Input 
-              id="month" 
-              placeholder="e.g. September 2025" 
-              className="h-12 rounded-xl"
-              {...register("month", { required: "Month is required" })}
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="month">Month of Travel</Label>
+              <Input
+                id="month"
+                placeholder="e.g. September 2025"
+                className="h-12 rounded-xl"
+                {...register("month", { required: "Month is required" })}
+              />
+            </div>
+            {/* Month Preview */}
+            <AnimatePresence>
+              {watchMonth && watchMonth.length > 2 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="relative rounded-2xl overflow-hidden h-40 border-4 border-white shadow-lg bg-muted"
+                >
+                  <img
+                    src={`https://loremflickr.com/800/400/${encodeURIComponent(watchMonth.split(' ')[0])},travel/all`}
+                    alt="Month Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-3 left-4 text-white font-bold">
+                    Searching the best vibes for {watchMonth}...
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
@@ -223,9 +277,9 @@ function TripDetails({ onNext, onBack, mode, initialData }: any) {
           <div className="grid grid-cols-3 gap-3">
             {["low", "medium", "high"].map((level) => (
               <label key={level} className="cursor-pointer">
-                <input 
-                  type="radio" 
-                  value={level} 
+                <input
+                  type="radio"
+                  value={level}
                   className="peer sr-only"
                   {...register("budget")}
                 />
@@ -299,9 +353,9 @@ function PersonalitySelection({ onBack, onSubmit, isPending, initialData }: any)
         <Button type="button" variant="outline" onClick={onBack} size="lg" className="rounded-xl px-6" disabled={isPending}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
-        <Button 
-          onClick={() => onSubmit({ personality })} 
-          size="lg" 
+        <Button
+          onClick={() => onSubmit({ personality })}
+          size="lg"
           className="rounded-xl px-8 min-w-[160px]"
           disabled={isPending}
         >

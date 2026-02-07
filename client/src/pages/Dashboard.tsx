@@ -1,9 +1,11 @@
 import { useTrips, useDeleteTrip } from "@/hooks/use-trips";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, MapPin, Trash2, ArrowRight } from "lucide-react";
+import { Plus, Calendar, MapPin, Trash2, ArrowRight, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +21,12 @@ import {
 export default function Dashboard() {
   const { data: trips, isLoading } = useTrips();
   const { mutate: deleteTrip } = useDeleteTrip();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredTrips = trips?.filter(trip =>
+    trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (trip.destination || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -32,17 +40,28 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto px-6 py-12">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">My Trips</h1>
           <p className="text-muted-foreground mt-1">Manage your upcoming adventures and past journeys.</p>
         </div>
-        <Button asChild className="rounded-xl px-6 h-12 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5 transition-all">
-          <Link href="/plan">
-            <Plus className="w-5 h-5 mr-2" />
-            Plan New Trip
-          </Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Input
+              placeholder="Search trips..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-11 rounded-xl bg-white border-border/50"
+            />
+            <Search className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
+          </div>
+          <Button asChild className="rounded-xl px-6 h-11 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5 transition-all">
+            <Link href="/plan">
+              <Plus className="w-5 h-5 mr-2" />
+              Plan New Trip
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {!trips?.length ? (
@@ -58,9 +77,14 @@ export default function Dashboard() {
             <Link href="/plan">Start Planning</Link>
           </Button>
         </div>
+      ) : (filteredTrips || []).length === 0 ? (
+        <div className="text-center py-24 bg-muted/20 rounded-3xl border-2 border-dashed border-border/50">
+          <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-lg font-medium text-muted-foreground">No trips found matching "{searchQuery}"</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trips.map((trip) => (
+          {(filteredTrips || []).map((trip) => (
             <motion.div
               key={trip.id}
               initial={{ opacity: 0, y: 20 }}
@@ -70,7 +94,7 @@ export default function Dashboard() {
               <div className="relative h-48 bg-muted overflow-hidden">
                 {/* Random travel image based on trip ID for visual variety */}
                 <img
-                  src={`https://images.unsplash.com/photo-${trip.id % 2 === 0 ? '1476514525535-07fb3b4ae5f1' : '1502791451864-ddca869792ab'}?w=800&h=600&fit=crop`}
+                  src={trip.coverImage || `https://images.unsplash.com/photo-${trip.id % 2 === 0 ? '1476514525535-07fb3b4ae5f1' : '1502791451864-ddca869792ab'}?w=800&h=600&fit=crop`}
                   alt={trip.destination || "Trip destination"}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -83,7 +107,7 @@ export default function Dashboard() {
                 <h3 className="text-xl font-bold font-display text-foreground mb-2 group-hover:text-primary transition-colors">
                   {trip.title}
                 </h3>
-                
+
                 <div className="space-y-2 mb-6 flex-1">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4 mr-2 text-primary/70" />
@@ -111,7 +135,7 @@ export default function Dashboard() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
+                        <AlertDialogAction
                           onClick={() => deleteTrip(trip.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg"
                         >

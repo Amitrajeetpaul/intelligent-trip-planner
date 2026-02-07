@@ -22,6 +22,7 @@ export const trips = pgTable("trips", {
   personality: text("personality").notNull().default("adventure"), // "budget", "adventure", "family"
   status: text("status").notNull().default("draft"), // "draft", "planned", "completed"
   safetyScore: integer("safety_score").default(10), // 1-10
+  coverImage: text("cover_image"), // URL to destination image
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -39,6 +40,7 @@ export const itineraryItems = pgTable("itinerary_items", {
   placeName: text("place_name").notNull(),
   description: text("description"),
   activityType: text("activity_type"), // "activity", "food", "transport", "hotel"
+  imageUrl: text("image_url"), // URL to place/activity image
   coordinates: jsonb("coordinates"), // { lat: number, lng: number } for map
 });
 
