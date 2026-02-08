@@ -71,6 +71,7 @@ export const packingRelations = relations(packingItems, ({ one }) => ({
 export const insertTripSchema = createInsertSchema(trips).omit({ id: true, createdAt: true, safetyScore: true });
 export const insertItineraryItemSchema = createInsertSchema(itineraryItems).omit({ id: true });
 export const insertPackingItemSchema = createInsertSchema(packingItems).omit({ id: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 
 // --- Types ---
 export type Trip = typeof trips.$inferSelect;
@@ -79,6 +80,8 @@ export type ItineraryItem = typeof itineraryItems.$inferSelect;
 export type InsertItineraryItem = z.infer<typeof insertItineraryItemSchema>;
 export type PackingItem = typeof packingItems.$inferSelect;
 export type InsertPackingItem = z.infer<typeof insertPackingItemSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
 
 // --- API Request Types ---
 export type CreateTripRequest = InsertTrip;

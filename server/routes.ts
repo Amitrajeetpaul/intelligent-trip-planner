@@ -3,6 +3,10 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
 // import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 // import { registerChatRoutes } from "./replit_integrations/chat";
 
@@ -15,6 +19,20 @@ const isAuthenticated = (req: any, res: any, next: any) => {
     res.status(401).json({ message: "Not authenticated" });
   }
 };
+
+// Helper functions for secure password hashing
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+async function comparePassword(stored: string, supplied: string) {
+  const [hashed, salt] = stored.split(".");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  const hashedBuf = Buffer.from(hashed, "hex");
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
 
 // AI Provider Configuration
 const AI_PROVIDER = process.env.AI_PROVIDER || "none"; // "openai", "gemini", "deepseek", "groq", "none"
@@ -189,31 +207,108 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // 1. Setup Auth (with persistent sessions)
-  app.get("/api/auth/user", (req: any, res) => {
+  // 1. Setup Auth Routes
+
+  // Get current user
+  app.get("/api/auth/user", async (req: any, res) => {
     if (req.session && req.session.user) {
-      res.json(req.session.user);
+      // Refresh user from DB to ensure it exists
+      const user = await storage.getUser(req.session.user.id);
+      if (user) {
+        req.session.user = user; // Update session
+        res.json(user);
+      } else {
+        req.session.destroy(() => res.status(401).json({ message: "User not found" }));
+      }
     } else {
       res.status(401).json({ message: "Not authenticated" });
     }
   });
 
-  app.post("/api/login", (req: any, res) => {
-    // Create a session for the user
-    req.session.user = {
-      id: "local-user-id",
-      email: "user@tripsync.com",
-      firstName: "Traveler",
-      lastName: "One",
-      profileImageUrl: null
-    };
+  // Register New User
+  app.post("/api/register", async (req, res) => {
+    const { email, password, firstName, lastName } = req.body;
 
-    req.session.save((err: any) => {
-      if (err) return res.status(500).json({ message: "Session creation failed" });
-      res.json({ message: "Logged in successfully", user: req.session.user });
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const existingUser = await storage.getUserByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists with this email" });
+    }
+
+    const hashedPassword = await hashPassword(password);
+    const user = await storage.createUser({
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      profileImageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${firstName}`,
+    });
+
+    (req.session as any).user = user;
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ message: "Session saving failed" });
+      res.status(201).json({ message: "User registered successfully", user });
     });
   });
 
+  // Login
+  app.post("/api/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    const user = await storage.getUserByEmail(email);
+    if (!user || user.googleId) {
+      // If user has googleId but no password, they signed up via Google
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Verify password if user exists and has a password
+    if (user.password) {
+      const isValid = await comparePassword(user.password, password);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      (req.session as any).user = user;
+      req.session.save((err) => {
+        if (err) return res.status(500).json({ message: "Login failed" });
+        res.json({ message: "Logged in successfully", user });
+      });
+    } else {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+  });
+
+  // Simulated Google Login (since we don't have client ID/Secrets configured)
+  // This creates a user if not exists, mimicking OAuth flow
+  app.post("/api/auth/google", async (req, res) => {
+    // In a real app, we would verify an ID token from the client here.
+    // Since we are simulating, we just create/log in a "Google User"
+
+    const email = "google-user@example.com";
+    const googleId = "google-oauth-mock-id";
+
+    let user = await storage.getUserByEmail(email);
+    if (!user) {
+      user = await storage.createUser({
+        email,
+        googleId,
+        firstName: "Google",
+        lastName: "User",
+        profileImageUrl: "https://lh3.googleusercontent.com/a-/ALV-UjW_8y_8y_8y_8y_8y_8y_8y_8y=s96-c",
+      });
+    }
+
+    (req.session as any).user = user;
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ message: "Google login failed" });
+      res.json({ message: "Logged in with Google", user });
+    });
+  });
+
+  // Logout
   app.get("/api/logout", (req: any, res) => {
     req.session.destroy((err: any) => {
       if (err) console.error("Logout error:", err);

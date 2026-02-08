@@ -1,12 +1,17 @@
 import { db } from "./db";
 import {
-  trips, itineraryItems, packingItems,
-  type InsertTrip, type InsertItineraryItem, type InsertPackingItem,
-  type Trip, type ItineraryItem, type PackingItem
+  trips, itineraryItems, packingItems, users,
+  type InsertTrip, type InsertItineraryItem, type InsertPackingItem, type InsertUser,
+  type Trip, type ItineraryItem, type PackingItem, type User
 } from "@shared/schema";
 import { eq, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
+  // Users
+  getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+
   // Trips
   createTrip(trip: InsertTrip): Promise<Trip>;
   getTrip(id: number): Promise<Trip | undefined>;
@@ -27,6 +32,22 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Users
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
   // Trips
   async createTrip(trip: InsertTrip): Promise<Trip> {
     const [newTrip] = await db.insert(trips).values(trip).returning();
