@@ -37,7 +37,15 @@ async function comparePassword(stored: string, supplied: string) {
 }
 
 // AI Provider Configuration
-const AI_PROVIDER = process.env.AI_PROVIDER || "none"; // "openai", "gemini", "deepseek", "groq", "none"
+let AI_PROVIDER = process.env.AI_PROVIDER || "none";
+
+// Auto-detect provider if not explicitly set
+if (AI_PROVIDER === "none") {
+  if (process.env.GEMINI_API_KEY) AI_PROVIDER = "gemini";
+  else if (process.env.OPENAI_API_KEY) AI_PROVIDER = "openai";
+  else if (process.env.DEEPSEEK_API_KEY) AI_PROVIDER = "deepseek";
+  else if (process.env.GROQ_API_KEY) AI_PROVIDER = "groq";
+}
 
 // Initialize AI client based on provider
 let aiClient: any = null;
