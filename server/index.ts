@@ -21,7 +21,32 @@ app.use(
   }),
 );
 
+import session from "express-session";
+import MemoryStore from "memorystore";
+
+const SessionStore = MemoryStore(session);
+
 app.use(express.urlencoded({ extended: false }));
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "default-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    store: new SessionStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
+
+// Trust proxy is required for secure cookies behind Render's load balancer
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

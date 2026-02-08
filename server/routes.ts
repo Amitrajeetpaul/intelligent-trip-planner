@@ -7,11 +7,9 @@ import { z } from "zod";
 // import { registerChatRoutes } from "./replit_integrations/chat";
 
 // Simple stateful mock for authentication
-let isMockLoggedIn = false;
-
 const isAuthenticated = (req: any, res: any, next: any) => {
-  if (isMockLoggedIn) {
-    req.user = { claims: { sub: "local-user-id" } };
+  if (req.session && req.session.user) {
+    req.user = { claims: { sub: req.session.user.id } }; // Compat with existing logic
     next();
   } else {
     res.status(401).json({ message: "Not authenticated" });
@@ -191,29 +189,36 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // 1. Setup Auth (Mocked for local dev)
-  app.get("/api/auth/user", (req, res) => {
-    if (isMockLoggedIn) {
-      res.json({
-        id: "local-user-id",
-        email: "local@example.com",
-        firstName: "Local",
-        lastName: "User",
-        profileImageUrl: null
-      });
+  // 1. Setup Auth (with persistent sessions)
+  app.get("/api/auth/user", (req: any, res) => {
+    if (req.session && req.session.user) {
+      res.json(req.session.user);
     } else {
       res.status(401).json({ message: "Not authenticated" });
     }
   });
 
-  app.post("/api/login", (req, res) => {
-    isMockLoggedIn = true;
-    res.json({ message: "Logged in successfully" });
+  app.post("/api/login", (req: any, res) => {
+    // Create a session for the user
+    req.session.user = {
+      id: "local-user-id",
+      email: "user@tripsync.com",
+      firstName: "Traveler",
+      lastName: "One",
+      profileImageUrl: null
+    };
+
+    req.session.save((err: any) => {
+      if (err) return res.status(500).json({ message: "Session creation failed" });
+      res.json({ message: "Logged in successfully", user: req.session.user });
+    });
   });
 
-  app.get("/api/logout", (req, res) => {
-    isMockLoggedIn = false;
-    res.redirect("/");
+  app.get("/api/logout", (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) console.error("Logout error:", err);
+      res.redirect("/");
+    });
   });
 
   // 2. Setup Chat
