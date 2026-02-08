@@ -248,6 +248,16 @@ function TripDetails({ onNext, onBack, mode, initialData }: any) {
                 {...register("month", { required: "Month is required" })}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="flexDate">Specific Date (Optional)</Label>
+              <Input
+                id="flexDate"
+                type="date"
+                className="h-12 rounded-xl"
+                {...register("startDate")}
+              />
+            </div>
             {/* Month Preview */}
             <AnimatePresence>
               {watchMonth && watchMonth.length > 2 && (
