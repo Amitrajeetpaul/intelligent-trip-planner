@@ -152,7 +152,11 @@ async function generateTripWithAI(input: any): Promise<any> {
     {
       "title": "Trip Title",
       "destination": "City, Country",
-      "safetyScore": 1-10,
+      "safetyScore": 9.8,
+      "weather": {
+        "forecast": "Sunny, 25°C",
+        "alerts": ["Monsoon season approaching"]
+      },
       "safetyWarnings": ["Warning 1", "Warning 2"],
       "itinerary": [
         {
@@ -439,6 +443,12 @@ export async function registerRoutes(
         personality: input.personality,
         status: "planned",
         coverImage,
+        // @ts-ignore - metadata is new
+        safetyScore: aiData.safetyScore || 9.5,
+        metadata: {
+          weather: aiData.weather,
+          safetyWarnings: aiData.safetyWarnings
+        }
       });
 
       // Save Itinerary

@@ -60,7 +60,11 @@ export default function TripDetail() {
           </div>
 
           <div className="w-full md:w-auto">
-            <SafetyWidget score={trip.safetyScore || 9} warnings={trip.safetyScore && trip.safetyScore < 7 ? ["Rainy season expected", "Moderate theft risk in downtown"] : []} />
+            <SafetyWidget
+              score={Math.min(trip.safetyScore || 9.5, 9.9)}
+              warnings={(trip.metadata as any)?.safetyWarnings || []}
+              weather={(trip.metadata as any)?.weather}
+            />
           </div>
         </div>
       </div>

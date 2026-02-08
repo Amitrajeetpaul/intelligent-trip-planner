@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -21,7 +21,8 @@ export const trips = pgTable("trips", {
   budget: text("budget"), // e.g., "Low", "Medium", "High" or specific amount
   personality: text("personality").notNull().default("adventure"), // "budget", "adventure", "family"
   status: text("status").notNull().default("draft"), // "draft", "planned", "completed"
-  safetyScore: integer("safety_score").default(10), // 1-10
+  safetyScore: real("safety_score").default(10), // 1-10 (Float, max 9.9)
+  metadata: jsonb("metadata"), // Stores weather, safetyWarnings, etc.
   coverImage: text("cover_image"), // URL to destination image
   createdAt: timestamp("created_at").defaultNow(),
 });
