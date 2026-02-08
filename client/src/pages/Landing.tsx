@@ -18,7 +18,7 @@ export default function Landing() {
           <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Features</a>
           <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">How it Works</a>
           <Button asChild variant="default" className="rounded-full px-6 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
-            <a href="/api/login">Start Planning</a>
+            <Link href="/auth">Start Planning</Link>
           </Button>
         </div>
       </nav>
@@ -30,7 +30,7 @@ export default function Landing() {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl -z-10" />
 
         <div className="lg:w-1/2 space-y-8 z-10">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -40,23 +40,23 @@ export default function Landing() {
               <span className="text-sm font-medium text-foreground/80">AI-Powered Travel Assistant</span>
             </div>
             <h1 className="text-5xl lg:text-7xl font-display font-bold leading-[1.1] text-foreground">
-              Travel smarter, <br/>
+              Travel smarter, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">explore further.</span>
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed max-w-lg mt-6">
-              Plan your perfect trip with intelligent itineraries, personalized suggestions, and real-time safety alerts. 
+              Plan your perfect trip with intelligent itineraries, personalized suggestions, and real-time safety alerts.
               From budget adventures to luxury escapes, we've got you covered.
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row gap-4"
           >
             <Button asChild size="lg" className="rounded-full text-base h-12 px-8 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
-              <a href="/api/login">Plan a Trip Now</a>
+              <Link href="/auth">Plan a Trip Now</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-full text-base h-12 px-8 border-2 hover:bg-secondary/50 transition-colors">
               <a href="#features">Learn More</a>
@@ -75,20 +75,20 @@ export default function Landing() {
           </div>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="lg:w-1/2 w-full relative"
         >
           <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl shadow-primary/20 border-8 border-white/50 bg-white">
-             {/* Scenic mountain landscape - unsplash source */}
-            <img 
-              src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=1000&fit=crop" 
-              alt="Travel Adventure" 
+            {/* Scenic mountain landscape - unsplash source */}
+            <img
+              src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=1000&fit=crop"
+              alt="Travel Adventure"
               className="w-full h-auto object-cover"
             />
-            
+
             {/* Floating UI Cards */}
             <div className="absolute top-8 left-8 bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-lg flex items-center gap-3 animate-float" style={{ animationDelay: '0s' }}>
               <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
@@ -110,7 +110,7 @@ export default function Landing() {
               </div>
             </div>
           </div>
-          
+
           {/* Decorative Pattern */}
           <div className="absolute -bottom-10 -left-10 w-full h-full border-2 border-primary/10 rounded-3xl -z-10 translate-x-4 translate-y-4" />
         </motion.div>

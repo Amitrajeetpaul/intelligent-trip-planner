@@ -6,11 +6,16 @@ import { z } from "zod";
 // import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 // import { registerChatRoutes } from "./replit_integrations/chat";
 
-// Mock isAuthenticated for local dev since we removed Replit Auth
+// Simple stateful mock for authentication
+let isMockLoggedIn = false;
+
 const isAuthenticated = (req: any, res: any, next: any) => {
-  // For local dev, attach a mock user
-  req.user = { claims: { sub: "local-user-id" } };
-  next();
+  if (isMockLoggedIn) {
+    req.user = { claims: { sub: "local-user-id" } };
+    next();
+  } else {
+    res.status(401).json({ message: "Not authenticated" });
+  }
 };
 
 // AI Provider Configuration
@@ -188,17 +193,28 @@ export async function registerRoutes(
 ): Promise<Server> {
   // 1. Setup Auth (Mocked for local dev)
   app.get("/api/auth/user", (req, res) => {
-    res.json({
-      id: "local-user-id",
-      email: "local@example.com",
-      firstName: "Local",
-      lastName: "User",
-      profileImageUrl: null
-    });
+    if (isMockLoggedIn) {
+      res.json({
+        id: "local-user-id",
+        email: "local@example.com",
+        firstName: "Local",
+        lastName: "User",
+        profileImageUrl: null
+      });
+    } else {
+      res.status(401).json({ message: "Not authenticated" });
+    }
   });
 
-  app.get("/api/login", (req, res) => res.redirect("/"));
-  app.get("/api/logout", (req, res) => res.redirect("/"));
+  app.post("/api/login", (req, res) => {
+    isMockLoggedIn = true;
+    res.json({ message: "Logged in successfully" });
+  });
+
+  app.get("/api/logout", (req, res) => {
+    isMockLoggedIn = false;
+    res.redirect("/");
+  });
 
   // 2. Setup Chat
   // registerChatRoutes(app);

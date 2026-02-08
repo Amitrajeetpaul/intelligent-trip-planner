@@ -8,6 +8,7 @@ import { Navigation } from "@/components/Navigation";
 import { Loader2 } from "lucide-react";
 
 import Landing from "@/pages/Landing";
+import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Wizard from "@/pages/Wizard";
 import TripDetail from "@/pages/TripDetail";
@@ -15,7 +16,7 @@ import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -26,9 +27,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }
 
   if (!user) {
-    // Return Landing page instead of redirecting if it's the root path request
-    // But for a true ProtectedRoute wrapper, we usually redirect.
-    // Here we'll just show landing if not auth.
+    if (location === "/auth") return <Auth />;
     return <Landing />;
   }
 
@@ -44,6 +43,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/auth" component={Auth} />
       <Route path="/plan" component={() => <ProtectedRoute component={Wizard} />} />
       <Route path="/trips/:id" component={() => <ProtectedRoute component={TripDetail} />} />
       <Route component={NotFound} />
