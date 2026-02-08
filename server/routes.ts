@@ -5,6 +5,8 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import passport from "passport";
+import { setupAuth } from "./auth";
 
 const scryptAsync = promisify(scrypt);
 // import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
@@ -207,6 +209,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  setupAuth(app);
+
   // 1. Setup Auth Routes
 
   // Get current user
@@ -281,32 +285,48 @@ export async function registerRoutes(
     }
   });
 
-  // Simulated Google Login (since we don't have client ID/Secrets configured)
-  // This creates a user if not exists, mimicking OAuth flow
-  app.post("/api/auth/google", async (req, res) => {
-    // In a real app, we would verify an ID token from the client here.
-    // Since we are simulating, we just create/log in a "Google User"
+  // Google Login Route (GET) - Handles both Real and Mock flows
+  app.get("/api/auth/google", async (req: any, res, next) => {
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+      // Real OAuth
+      passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+    } else {
+      // Mock OAuth Simulation (Fallback)
+      const email = "google-user@example.com";
+      const googleId = "google-oauth-mock-id";
 
-    const email = "google-user@example.com";
-    const googleId = "google-oauth-mock-id";
+      let user = await storage.getUserByEmail(email);
+      if (!user) {
+        user = await storage.createUser({
+          email,
+          googleId,
+          firstName: "Google",
+          lastName: "User",
+          profileImageUrl: "https://lh3.googleusercontent.com/a-/ALV-UjW_8y_8y_8y_8y_8y_8y_8y_8y=s96-c",
+        });
+      }
 
-    let user = await storage.getUserByEmail(email);
-    if (!user) {
-      user = await storage.createUser({
-        email,
-        googleId,
-        firstName: "Google",
-        lastName: "User",
-        profileImageUrl: "https://lh3.googleusercontent.com/a-/ALV-UjW_8y_8y_8y_8y_8y_8y_8y_8y=s96-c",
+      req.session.user = user;
+      req.session.save((err: any) => {
+        if (err) return res.status(500).send("Session error");
+        res.redirect("/");
       });
     }
-
-    (req.session as any).user = user;
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ message: "Google login failed" });
-      res.json({ message: "Logged in with Google", user });
-    });
   });
+
+  // Google Callback Route (Only usage for Real OAuth)
+  app.get(
+    "/api/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    (req: any, res) => {
+      // Successful authentication
+      req.session.user = req.user;
+      req.session.save((err: any) => {
+        if (err) return res.status(500).send("Session save error");
+        res.redirect("/");
+      });
+    }
+  );
 
   // Logout
   app.get("/api/logout", (req: any, res) => {

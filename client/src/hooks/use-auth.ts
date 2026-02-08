@@ -42,10 +42,7 @@ async function register(credentials: any): Promise<void> {
 }
 
 async function googleLogin(): Promise<void> {
-  const response = await fetch("/api/auth/google", {
-    method: "POST",
-  });
-  if (!response.ok) throw new Error("Google login failed");
+  window.location.href = "/api/auth/google";
 }
 
 async function logout(): Promise<void> {
