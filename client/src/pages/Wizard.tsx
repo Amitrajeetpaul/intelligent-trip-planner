@@ -258,6 +258,16 @@ function TripDetails({ onNext, onBack, mode, initialData }: any) {
                 {...register("startDate")}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="flexEndDate">End Date (Optional)</Label>
+              <Input
+                id="flexEndDate"
+                type="date"
+                className="h-12 rounded-xl"
+                {...register("endDate")}
+              />
+            </div>
             {/* Month Preview */}
             <AnimatePresence>
               {watchMonth && watchMonth.length > 2 && (

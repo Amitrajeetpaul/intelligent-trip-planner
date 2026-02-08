@@ -142,7 +142,7 @@ async function generateTripWithAI(input: any): Promise<any> {
   const prompt = `
     Generate a structured travel plan for a trip.
     Destination: ${input.destination || "Suggest a destination"}
-    Month/Date: ${input.month ? `${input.month}${input.startDate ? ` (starting around ${input.startDate})` : ""}` : (input.startDate || "Anytime")}
+    Month/Date: ${input.month ? `${input.month}${input.startDate ? ` (from ${input.startDate} to ${input.endDate || "flexible"})` : ""}` : (input.startDate || "Anytime")}
     Budget: ${input.budget}
     Personality: ${input.personality}
     
