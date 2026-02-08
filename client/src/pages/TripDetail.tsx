@@ -90,27 +90,18 @@ export default function TripDetail() {
                     <AccordionContent className="pt-4 px-4 pb-4">
                       <div className="relative pl-8 space-y-8 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border">
                         {trip.itinerary.filter(i => i.dayNumber === day).sort((a, b) => (a.timeSlot || "").localeCompare(b.timeSlot || "")).map((item, idx) => (
-                          <div key={idx} className="relative">
-                            <div className="absolute -left-[39px] top-0 w-10 h-10 rounded-full border-4 border-white bg-secondary flex items-center justify-center z-10">
+                          <div key={idx} className="relative group">
+                            <div className="absolute -left-[39px] top-0 w-10 h-10 rounded-full border-4 border-white bg-secondary flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
                               {getIconForType(item.activityType || "activity")}
                             </div>
-                            <div className="bg-muted/30 p-4 rounded-xl border border-border/30 hover:border-primary/20 transition-colors">
+                            <div className="bg-muted/30 p-5 rounded-2xl border border-border/30 hover:border-primary/20 hover:bg-white hover:shadow-lg transition-all duration-300">
                               <div className="flex flex-col md:flex-row gap-4">
-                                {item.imageUrl && (
-                                  <div className="w-full md:w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 border border-border/50">
-                                    <img
-                                      src={item.imageUrl}
-                                      alt={item.placeName}
-                                      className="w-full h-full object-cover transition-transform hover:scale-110 duration-500"
-                                    />
-                                  </div>
-                                )}
-                                <div className="flex-1">
-                                  <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex justify-between items-start">
                                     <h4 className="font-bold text-foreground text-lg">{item.placeName}</h4>
-                                    <span className="text-xs font-mono bg-white px-2 py-1 rounded border text-muted-foreground">{item.timeSlot}</span>
+                                    <span className="text-xs font-mono font-medium bg-primary/10 text-primary px-2 py-1.5 rounded-md border border-primary/10 whitespace-nowrap">{item.timeSlot}</span>
                                   </div>
-                                  <p className="text-muted-foreground leading-relaxed italic text-sm mb-2">"{item.description}"</p>
+                                  <p className="text-muted-foreground leading-relaxed text-sm">"{item.description}"</p>
                                 </div>
                               </div>
                             </div>

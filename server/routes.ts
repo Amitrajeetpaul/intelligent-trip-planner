@@ -446,7 +446,6 @@ export async function registerRoutes(
         for (const day of aiData.itinerary) {
           if (day.activities && Array.isArray(day.activities)) {
             for (const act of day.activities) {
-              const itemImageUrl = await fetchImageByQuery(`${act.place} - ${aiData.destination || input.destination}`);
               await storage.createItineraryItem({
                 tripId: trip.id,
                 dayNumber: day.day,
@@ -454,7 +453,7 @@ export async function registerRoutes(
                 placeName: act.place,
                 description: act.description,
                 activityType: act.type,
-                imageUrl: itemImageUrl,
+                imageUrl: null, // User requested to disable per-item images as they were often incorrect
                 coordinates: null,
               });
             }
